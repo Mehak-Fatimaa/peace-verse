@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PeaceVerse - Share Your Mood</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&display=swap');
+
+        body {
+          margin: 0; padding: 60px 20px;
+          font-family: 'Nunito', sans-serif;
+          background: #f5f1fa;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          min-height: 100vh;
+          color: #5a5a5a;
+        }
+
+        .heart-icon {
+          background: radial-gradient(circle, #cfb7f9 40%, #f1c4d2 90%);
+          width: 64px;
+          height: 64px;
+          border-radius: 50%;
+          margin-bottom: 28px;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          box-shadow: 0 4px 12px rgba(202,169,246,0.4);
+        }
+        .heart-icon svg {
+          fill: white;
+          width: 28px;
+          height: 28px;
+        }
+
+        h1 {
+          font-weight: 900;
+          font-size: 2.4rem;
+          margin: 0 0 10px;
+          background: linear-gradient(90deg, #bfa3eb 50%, #f7b8bf 90%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+        }
+        h1 .wave {
+          display: inline-block;
+          transform: rotate(15deg);
+        }
+
+        p {
+          max-width: 400px;
+          font-weight: 500;
+          font-size: 1.05rem;
+          margin: 0 0 24px;
+          padding: 0 5px;
+        }
+
+        textarea {
+          width: 100%;
+          max-width: 480px;
+          min-height: 115px;
+          border-radius: 24px;
+          border: none;
+          padding: 22px 20px 22px;
+          font-size: 1.1rem;
+          resize: vertical;
+          font-family: 'Nunito', sans-serif;
+          background-color: #f8f4ff;
+          box-shadow: inset 0 0 10px rgba(203, 185, 251, 0.5);
+          transition: background-color 0.3s ease;
+          position: relative;
+        }
+        textarea::placeholder {
+          color: #b79ff4;
+        }
+        textarea:focus {
+          outline: none;
+          background-color: #efebff;
+        }
+
+        /* sparkle emoji right top corner */
+        textarea::after {
+          content: "✨";
+          position: absolute;
+          right: 22px;
+          top: 14px;
+          font-size: 1.3rem;
+          pointer-events: none;
+        }
+
+        button {
+          margin-top: 32px;
+          max-width: 480px;
+          width: 100%;
+          border: none;
+          border-radius: 42px;
+          padding: 18px 0;
+          background: linear-gradient(90deg, #bfa3eb, #f7b8bf);
+          color: white;
+          font-size: 1.3rem;
+          font-weight: 700;
+          cursor: pointer;
+          user-select: none;
+          box-shadow: 0 5px 14px rgba(185,156,241,0.5);
+          transition: filter 0.3s ease;
+        }
+        button:disabled {
+          filter: grayscale(0.7);
+          cursor: default;
+        }
+        button:not(:disabled):hover {
+          filter: brightness(1.12);
+        }
+    </style>
+</head>
+<body>
+<div class="heart-icon" aria-hidden="true">
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" >
+        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42
+      4.42 3 7.5 3c1.74 0 3.41 0.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3
+      22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+    </svg>
+</div>
+
+<h1>Hey there! <span class="wave" role="img" aria-label="Waving hand">👋</span></h1>
+<p>How are you feeling today? Share your thoughts and I'll guide you with a beautiful Quranic verse <span role="img" aria-label="Yellow heart">💛</span></p>
+
+<form id="moodForm" style="width: 100%; max-width: 480px;">
+    <textarea id="moodInput" name="moodInput" placeholder="Type your mood here... 😊" aria-label="Type your mood here"></textarea>
+    <button id="sendBtn" type="submit" disabled>Send ❤️</button>
+</form>
+
+<script>
+    const moodInput = document.getElementById('moodInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const form = document.getElementById('moodForm');
+
+    moodInput.addEventListener('input', () => {
+      sendBtn.disabled = moodInput.value.trim().length === 0;
+    });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const mood = moodInput.value.trim();
+      if(!mood) return;
+
+      sendBtn.disabled = true;
+      sendBtn.textContent = 'Sending... ❤️';
+
+      try {
+        const response = await fetch('/api/analyzeMood', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({mood})
+        });
+        if (!response.ok) throw new Error('Network response was not ok');
+
+        const verseData = await response.json();
+
+        sessionStorage.setItem('verseData', JSON.stringify(verseData));
+
+        window.location.href = "/verse.html";
+
+      } catch (err) {
+        alert('Failed to get the verse, please try again.');
+        sendBtn.disabled = false;
+        sendBtn.textContent = 'Send ❤️';
+        console.error(err);
+      }
+    });
+</script>
+</body>
+</html>

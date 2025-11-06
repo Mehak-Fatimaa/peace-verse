@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PeaceVerse - Your Verse</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&display=swap');
+
+        body {
+          margin: 40px 20px 40px;
+          font-family: 'Nunito', sans-serif;
+          background: #f5f1fa;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          min-height: 100vh;
+          color: #4a4a4a;
+        }
+
+        .card {
+          background: white;
+          border-radius: 20px;
+          padding: 28px 30px;
+          max-width: 580px;
+          box-shadow: 0 6px 35px rgb(193 175 254 / 0.24);
+          width: 100%;
+        }
+        .mood-info {
+          font-weight: 700;
+          margin-bottom: 18px;
+          font-size: 1rem;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+        .sentiment-info {
+          font-weight: 700;
+          margin-bottom: 20px;
+          font-size: 1rem;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+        }
+        .sentiment-positive { color: #56c870; }
+        .sentiment-negative { color: #f46a6a; }
+        .sentiment-neutral { color: #9f9f9f; }
+
+        .verse-section {
+          background: #f8f6ff;
+          border-radius: 14px;
+          padding: 24px 22px;
+          font-family: 'Scheherazade', serif;
+          box-shadow: inset 0 0 30px rgb(183 139 244 / 0.15);
+        }
+
+        .arabic-text {
+          font-size: 2rem;
+          line-height: 1.3;
+          text-align: right;
+          margin-bottom: 20px;
+          color: #4d3ea6;
+        }
+        .translation-text {
+          color: #56479b;
+          font-weight: 500;
+          font-size: 1rem;
+          line-height: 1.4;
+        }
+
+        .footer-text {
+          text-align: center;
+          font-weight: 500;
+          color: #f5b941;
+          margin: 25px 0 15px;
+          font-size: 1rem;
+        }
+
+        button.share-more {
+          background: linear-gradient(90deg, #f5ce55, #f4a550);
+          padding: 14px 0;
+          border-radius: 38px;
+          border: none;
+          font-weight: 700;
+          font-size: 1.1rem;
+          width: 100%;
+          max-width: 580px;
+          color: white;
+          cursor: pointer;
+          box-shadow: 0 8px 28px rgb(245 206 85 / 0.65);
+          transition: filter 0.3s ease;
+        }
+        button.share-more:hover {
+          filter: brightness(1.1);
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Scheherazade&display=swap" rel="stylesheet" />
+</head>
+<body>
+<div class="card" role="main" aria-live="polite">
+    <div class="mood-info">
+        <span aria-label="Mood icon" role="img">♡</span>
+        <div>
+            <small>Your Mood</small><br />
+            <strong id="moodValue">-</strong>
+        </div>
+    </div>
+
+    <div class="sentiment-info" id="sentimentInfo">
+        <span aria-label="Sparkles" role="img">✨</span>
+        <div>
+            <small>Detected Sentiment</small><br />
+            <strong id="sentimentText" class="">-</strong>
+        </div>
+    </div>
+
+    <div style="margin-bottom:10px; font-weight:600; color:#7a5df5; cursor:pointer;" id="quranVerseLabel">
+        📖 Quranic Verse
+    </div>
+
+    <div class="verse-section">
+        <p class="arabic-text" id="arabicVerse">...</p>
+        <p class="translation-text" id="translationVerse">...</p>
+    </div>
+
+    <p class="footer-text">Your feelings matter <span aria-label="Heart" role="img">❤️</span></p>
+
+    <button class="share-more" id="shareMoreBtn" aria-label="Do you want to share more feelings?">
+        Do you want to share more feelings? 📩
+    </button>
+</div>
+
+<script>
+    window.addEventListener('DOMContentLoaded', () => {
+      const verseDataRaw = sessionStorage.getItem('verseData');
+      if (!verseDataRaw) {
+        alert('No verse data found. Redirecting to home...');
+        location.href = '/';
+        return;
+      }
+      const verseData = JSON.parse(verseDataRaw);
+
+      // Populate mood
+      const moodValue = document.getElementById('moodValue');
+      const sentimentText = document.getElementById('sentimentText');
+      const arabicVerse = document.getElementById('arabicVerse');
+      const translationVerse = document.getElementById('translationVerse');
+
+      // Show user mood
+      moodValue.textContent = verseData.mood || '-';
+
+      // Show sentiment with emoji/color
+      const sentiment = verseData.sentiment || 'neutral';
+
+      sentimentText.textContent = sentiment.charAt(0).toUpperCase() + sentiment.slice(1);
+
+      if (sentiment === 'positive') {
+        sentimentText.className = 'sentiment-positive';
+        sentimentText.innerHTML = '😊 Positive';
+      } else if (sentiment === 'negative') {
+        sentimentText.className = 'sentiment-negative';
+        sentimentText.innerHTML = '😔 Negative';
+      } else {
+        sentimentText.className = 'sentiment-neutral';
+        sentimentText.innerHTML = '😐 Neutral';
+      }
+
+      // Show Quranic verse and translation
+      arabicVerse.textContent = verseData.arabicVerse || '';
+      translationVerse.textContent = verseData.translation || '';
+
+      // Clear stored data so refresh doesn't keep old verse
+      sessionStorage.removeItem('verseData');
+    });
+
+    document.getElementById('shareMoreBtn').addEventListener('click', () => {
+      window.location.href = "/";
+    });
+</script>
+</body>
+</html>
