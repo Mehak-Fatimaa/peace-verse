@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PeaceVerse - Login</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&display=swap');
+
+        body {
+            margin: 0;
+            padding: 60px 20px;
+            font-family: 'Nunito', sans-serif;
+            background: #f5f1fa;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            color: #5a5a5a;
+        }
+
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 28px 30px;
+            max-width: 580px;
+            width: 100%;
+            box-shadow: 0 6px 35px rgb(193 175 254 / 0.24);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .heart-icon {
+            background: radial-gradient(circle, #cfb7f9 40%, #f1c4d2 90%);
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 4px 12px rgba(202,169,246,0.4);
+        }
+
+        .heart-icon svg {
+            fill: white;
+            width: 28px;
+            height: 28px;
+        }
+
+        h1 {
+            font-weight: 900;
+            font-size: 2rem;
+            margin: 0 0 12px;
+            background: linear-gradient(90deg, #bfa3eb 50%, #f7b8bf 90%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-align: center;
+        }
+
+        p {
+            max-width: 400px;
+            font-weight: 500;
+            font-size: 1rem;
+            margin: 0 0 24px;
+            text-align: center;
+        }
+
+        input {
+            width: 100%;
+            max-width: 480px;
+            border-radius: 24px;
+            border: none;
+            padding: 18px 20px;
+            font-size: 1.1rem;
+            margin-bottom: 20px;
+            font-family: 'Nunito', sans-serif;
+            background-color: #f8f4ff;
+            box-shadow: inset 0 0 10px rgba(203, 185, 251, 0.5);
+            transition: background-color 0.3s ease;
+        }
+
+        input:focus {
+            outline: none;
+            background-color: #efebff;
+        }
+
+        button {
+            margin-top: 10px;
+            width: 100%;
+            border: none;
+            border-radius: 42px;
+            padding: 18px 0;
+            background: linear-gradient(90deg, #bfa3eb, #f7b8bf);
+            color: white;
+            font-size: 1.3rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 5px 14px rgba(185,156,241,0.5);
+            transition: filter 0.3s ease;
+        }
+
+        button:disabled {
+            filter: grayscale(0.7);
+            cursor: default;
+        }
+        button:not(:disabled):hover {
+            filter: brightness(1.12);
+        }
+    </style>
+</head>
+<body>
+<div class="card">
+    <div class="heart-icon">
+        <svg viewBox="0 0 24 24">
+            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42
+            4.42 3 7.5 3c1.74 0 3.41 0.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3
+            22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+        </svg>
+    </div>
+
+    <h1>Welcome Back!</h1>
+    <p>Please login to save your verse 💛</p>
+
+    <form id="loginForm">
+        <input type="text" id="username" placeholder="Username" required />
+        <input type="password" id="password" placeholder="Password" required />
+        <button type="submit">Login 🔒</button>
+    </form>
+</div>
+
+<script>
+    const loginForm = document.getElementById('loginForm');
+    loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const username = document.getElementById('username').value.trim();
+        const password = document.getElementById('password').value.trim();
+
+        if (!username || !password) return;
+
+        try {
+            const response = await fetch('/auth/login', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({username, password})
+            });
+
+            if (!response.ok) throw new Error('Login failed');
+
+            // Save logged-in user as object
+            sessionStorage.setItem('loggedInUser', JSON.stringify({ username }));
+
+            // Auto-save pending verse (if exists)
+            const pendingVerse = sessionStorage.getItem('pendingSaveVerse');
+            if (pendingVerse) {
+                const verseData = JSON.parse(pendingVerse);
+                verseData.username = username; // Attach logged-in username
+
+                await fetch('/api/saveVerse', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(verseData)
+                });
+
+                sessionStorage.removeItem('pendingSaveVerse');
+            }
+
+            alert('Login successful!');
+            window.location.href = '/verseDisplay.html';
+
+        } catch (err) {
+            alert('Invalid credentials, please try again.');
+            console.error(err);
+        }
+    });
+
+
+</script>
+</body>
+</html>

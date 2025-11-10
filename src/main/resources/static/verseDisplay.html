@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PeaceVerse - Your Saved Verses</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&display=swap');
+
+        body {
+          margin: 40px 20px;
+          font-family: 'Nunito', sans-serif;
+          background: #f5f1fa;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          min-height: 100vh;
+          color: #4a4a4a;
+        }
+
+        h1 {
+          color: #6b4ce6;
+          font-size: 1.8rem;
+          margin-bottom: 25px;
+          text-align: center;
+        }
+
+        .verse-card {
+          background: white;
+          border-radius: 18px;
+          padding: 20px;
+          width: 100%;
+          max-width: 580px;
+          box-shadow: 0 6px 30px rgb(193 175 254 / 0.24);
+          margin-bottom: 25px;
+          transition: transform 0.2s ease;
+        }
+
+        .verse-card:hover {
+          transform: translateY(-4px);
+        }
+
+        .verse-header {
+          font-weight: 700;
+          margin-bottom: 8px;
+          color: #6b4ce6;
+          font-size: 1.1rem;
+        }
+
+        .arabic-text {
+          font-family: 'Scheherazade', serif;
+          font-size: 1.6rem;
+          text-align: right;
+          color: #4d3ea6;
+          margin-bottom: 10px;
+        }
+
+        .translation-text {
+          color: #56479b;
+          font-weight: 500;
+          font-size: 1rem;
+          margin-bottom: 12px;
+          line-height: 1.4;
+        }
+
+        .mood {
+          color: #f5b941;
+          font-weight: 600;
+          font-size: 0.95rem;
+        }
+
+        .sentiment {
+          font-weight: 600;
+          margin-top: 4px;
+          font-size: 0.95rem;
+        }
+
+        .sentiment-positive { color: #56c870; }
+        .sentiment-negative { color: #f46a6a; }
+        .sentiment-neutral { color: #9f9f9f; }
+
+        .empty-message {
+          color: #8a8a8a;
+          font-size: 1.1rem;
+          margin-top: 40px;
+          text-align: center;
+        }
+
+        button.back-btn {
+          background: linear-gradient(90deg, #f5ce55, #f4a550);
+          padding: 12px 25px;
+          border-radius: 35px;
+          border: none;
+          font-weight: 700;
+          font-size: 1rem;
+          color: white;
+          cursor: pointer;
+          margin-top: 25px;
+          box-shadow: 0 8px 28px rgb(245 206 85 / 0.65);
+          transition: filter 0.3s ease;
+        }
+
+        button.back-btn:hover {
+          filter: brightness(1.1);
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Scheherazade&display=swap" rel="stylesheet" />
+</head>
+<body>
+<h1 id="welcomeText">Your Saved Verses 💫</h1>
+
+<div id="versesContainer"></div>
+
+<p class="empty-message" id="emptyMessage" style="display: none;">No saved verses yet 💭</p>
+
+<button class="back-btn" id="goHomeBtn">Back to Home 🏠</button>
+
+<script>
+    window.addEventListener('DOMContentLoaded', async () => {
+      const rawUser = sessionStorage.getItem('loggedInUser');
+      if (!rawUser) {
+        alert("Please log in first.");
+        window.location.href = "/register.html";
+        return;
+      }
+
+      const user = JSON.parse(rawUser);
+      const username = user.username;
+      document.getElementById('welcomeText').textContent = `Welcome, ${username} 💜 Your Saved Verses`;
+
+      try {
+        const res = await fetch(`/api/userVerses?username=${username}`);
+        if (!res.ok) throw new Error("Failed to fetch verses");
+
+        const verses = await res.json();
+        const container = document.getElementById('versesContainer');
+        const emptyMessage = document.getElementById('emptyMessage');
+
+        if (!verses || verses.length === 0) {
+          emptyMessage.style.display = 'block';
+          return;
+        }
+
+        verses.forEach(v => {
+          const card = document.createElement('div');
+          card.classList.add('verse-card');
+
+          card.innerHTML = `
+            <div class="verse-header">📖 Saved Verse</div>
+            <div class="arabic-text">${v.arabicVerse}</div>
+            <div class="translation-text">${v.translation}</div>
+            <div class="mood">Mood: ${v.mood}</div>
+            <div class="sentiment ${v.sentiment.toLowerCase() === 'positive' ? 'sentiment-positive' :
+                                  v.sentiment.toLowerCase() === 'negative' ? 'sentiment-negative' :
+                                  'sentiment-neutral'}">
+              Sentiment: ${v.sentiment}
+            </div>
+          `;
+          container.appendChild(card);
+        });
+
+      } catch (err) {
+        console.error("Error fetching verses:", err);
+        alert("Failed to load saved verses.");
+      }
+    });
+
+    document.getElementById('goHomeBtn').addEventListener('click', () => {
+      window.location.href = "/";
+    });
+</script>
+</body>
+</html>

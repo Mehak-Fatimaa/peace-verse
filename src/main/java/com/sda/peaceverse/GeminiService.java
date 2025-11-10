@@ -63,7 +63,7 @@ public class GeminiService {
         var content = (Map<String, Object>) candidates.get(0).get("content");
         var parts = (List<Map<String, Object>>) content.get("parts");
         String jsonContent = (String) parts.get(0).get("text");
-
+        System.out.println("Raw Gemini response: " + jsonContent);
         // Clean markdown
         jsonContent = jsonContent.replaceAll("```json", "").replaceAll("```", "").trim();
 

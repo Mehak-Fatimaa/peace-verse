@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>PeaceVerse - Share Your Mood</title>
+    <title>PeaceVerse - Register</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&display=swap');
 
@@ -43,10 +43,6 @@
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
         }
-        h1 .wave {
-          display: inline-block;
-          transform: rotate(15deg);
-        }
 
         p {
           max-width: 400px;
@@ -56,41 +52,29 @@
           padding: 0 5px;
         }
 
-        textarea {
+        input {
           width: 100%;
           max-width: 480px;
-          min-height: 115px;
           border-radius: 24px;
           border: none;
-          padding: 22px 20px 22px;
+          padding: 18px 20px;
           font-size: 1.1rem;
-          resize: vertical;
+          margin-bottom: 18px;
           font-family: 'Nunito', sans-serif;
           background-color: #f8f4ff;
           box-shadow: inset 0 0 10px rgba(203, 185, 251, 0.5);
           transition: background-color 0.3s ease;
-          position: relative;
         }
-        textarea::placeholder {
+        input::placeholder {
           color: #b79ff4;
         }
-        textarea:focus {
+        input:focus {
           outline: none;
           background-color: #efebff;
         }
 
-        /* sparkle emoji right top corner */
-        textarea::after {
-          content: "✨";
-          position: absolute;
-          right: 22px;
-          top: 14px;
-          font-size: 1.3rem;
-          pointer-events: none;
-        }
-
         button {
-          margin-top: 32px;
+          margin-top: 16px;
           max-width: 480px;
           width: 100%;
           border: none;
@@ -112,30 +96,13 @@
         button:not(:disabled):hover {
           filter: brightness(1.12);
         }
-        .top-bar {
-          position: absolute;
-          top: 20px;
-          right: 20px;
-        }
 
-        .signup-btn {
-          background: linear-gradient(90deg, #f5ce55, #f4a550);
-          padding: 10px 22px;
-          border-radius: 30px;
-          border: none;
-          font-weight: 700;
-          font-size: 0.95rem;
-          color: white;
+        .login-link {
+          margin-top: 16px;
+          font-size: 1rem;
+          color: #7a5df5;
           cursor: pointer;
-          box-shadow: 0 6px 20px rgba(244, 165, 80, 0.55);
-          transition: filter 0.3s ease, transform 0.2s ease;
         }
-
-        .signup-btn:hover {
-          filter: brightness(1.1);
-          transform: translateY(-2px);
-        }
-
     </style>
 </head>
 <body>
@@ -147,55 +114,52 @@
     </svg>
 </div>
 
-<h1>Hey there! <span class="wave" role="img" aria-label="Waving hand">👋</span></h1>
-<p>How are you feeling today? Share your thoughts and I'll guide you with a beautiful Quranic verse <span role="img" aria-label="Yellow heart">💛</span></p>
+<h1>Welcome! <span class="wave" role="img" aria-label="Waving hand">👋</span></h1>
+<p>Create your account to save your favorite verses 💛</p>
 
-<div class="top-bar">
-    <button class="signup-btn" onclick="window.location.href='/register.html'">Sign Up</button>
-</div>
-
-<form id="moodForm" style="width: 100%; max-width: 480px;">
-    <textarea id="moodInput" name="moodInput" placeholder="Type your mood here... 😊" aria-label="Type your mood here"></textarea>
-    <button id="sendBtn" type="submit" disabled>Send ❤️</button>
+<form id="registerForm" style="width: 100%; max-width: 480px;">
+    <input type="text" id="username" placeholder="Username" required />
+    <input type="password" id="password" placeholder="Password" required />
+    <button type="submit" id="registerBtn">Register ❤️</button>
 </form>
 
-<script>
-    const moodInput = document.getElementById('moodInput');
-    const sendBtn = document.getElementById('sendBtn');
-    const form = document.getElementById('moodForm');
+<p class="login-link" id="goLogin">Already have an account? Login here</p>
 
-    moodInput.addEventListener('input', () => {
-      sendBtn.disabled = moodInput.value.trim().length === 0;
-    });
+<script>
+    const form = document.getElementById('registerForm');
+    const registerBtn = document.getElementById('registerBtn');
 
     form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const mood = moodInput.value.trim();
-      if(!mood) return;
+        e.preventDefault();
+        const username = document.getElementById('username').value.trim();
+        const password = document.getElementById('password').value.trim();
+        if (!username || !password) return;
 
-      sendBtn.disabled = true;
-      sendBtn.textContent = 'Sending... ❤️';
+        registerBtn.disabled = true;
+        registerBtn.textContent = 'Registering... ❤️';
 
-      try {
-        const response = await fetch('/api/analyzeMood', {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({mood})
-        });
-        if (!response.ok) throw new Error('Network response was not ok');
+        try {
+            const response = await fetch('/auth/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
 
-        const verseData = await response.json();
+            if (!response.ok) throw new Error('Registration failed');
 
-        sessionStorage.setItem('verseData', JSON.stringify(verseData));
+            alert('Registration successful! Please login.');
+            window.location.href = '/login.html';
 
-        window.location.href = "/verse.html";
+        } catch (err) {
+            alert('Failed to register. Username may already exist.');
+            console.error(err);
+            registerBtn.disabled = false;
+            registerBtn.textContent = 'Register ❤️';
+        }
+    });
 
-      } catch (err) {
-        alert('Failed to get the verse, please try again.');
-        sendBtn.disabled = false;
-        sendBtn.textContent = 'Send ❤️';
-        console.error(err);
-      }
+    document.getElementById('goLogin').addEventListener('click', () => {
+        window.location.href = '/login.html';
     });
 </script>
 </body>

@@ -89,6 +89,7 @@
           cursor: pointer;
           box-shadow: 0 8px 28px rgb(245 206 85 / 0.65);
           transition: filter 0.3s ease;
+          margin-bottom: 10px;
         }
         button.share-more:hover {
           filter: brightness(1.1);
@@ -128,54 +129,116 @@
     <button class="share-more" id="shareMoreBtn" aria-label="Do you want to share more feelings?">
         Do you want to share more feelings? 📩
     </button>
-</div>
 
+    <button class="share-more" id="saveVerseBtn" aria-label="Save this verse">
+        Save Verse 💾
+    </button>
+</div>
 <script>
     window.addEventListener('DOMContentLoaded', () => {
-      const verseDataRaw = sessionStorage.getItem('verseData');
-      if (!verseDataRaw) {
-        alert('No verse data found. Redirecting to home...');
-        location.href = '/';
-        return;
-      }
-      const verseData = JSON.parse(verseDataRaw);
+        const verseDataRaw = sessionStorage.getItem('verseData');
+        if (!verseDataRaw) {
+            alert('No verse data found. Redirecting to home...');
+            location.href = '/';
+            return;
+        }
 
-      // Populate mood
-      const moodValue = document.getElementById('moodValue');
-      const sentimentText = document.getElementById('sentimentText');
-      const arabicVerse = document.getElementById('arabicVerse');
-      const translationVerse = document.getElementById('translationVerse');
+        const verseData = JSON.parse(verseDataRaw);
 
-      // Show user mood
-      moodValue.textContent = verseData.mood || '-';
+        // Populate mood & verse info
+        document.getElementById('moodValue').textContent = verseData.mood || '-';
+        const sentimentText = document.getElementById('sentimentText');
+        const sentiment = verseData.sentiment || 'neutral';
 
-      // Show sentiment with emoji/color
-      const sentiment = verseData.sentiment || 'neutral';
+        sentimentText.textContent = sentiment.charAt(0).toUpperCase() + sentiment.slice(1);
+        if (sentiment === 'positive') {
+            sentimentText.className = 'sentiment-positive';
+            sentimentText.innerHTML = '😊 Positive';
+        } else if (sentiment === 'negative') {
+            sentimentText.className = 'sentiment-negative';
+            sentimentText.innerHTML = '😔 Negative';
+        } else {
+            sentimentText.className = 'sentiment-neutral';
+            sentimentText.innerHTML = '😐 Neutral';
+        }
 
-      sentimentText.textContent = sentiment.charAt(0).toUpperCase() + sentiment.slice(1);
+        document.getElementById('arabicVerse').textContent = verseData.arabicVerse || '';
+        document.getElementById('translationVerse').textContent = verseData.translation || '';
 
-      if (sentiment === 'positive') {
-        sentimentText.className = 'sentiment-positive';
-        sentimentText.innerHTML = '😊 Positive';
-      } else if (sentiment === 'negative') {
-        sentimentText.className = 'sentiment-negative';
-        sentimentText.innerHTML = '😔 Negative';
-      } else {
-        sentimentText.className = 'sentiment-neutral';
-        sentimentText.innerHTML = '😐 Neutral';
-      }
-
-      // Show Quranic verse and translation
-      arabicVerse.textContent = verseData.arabicVerse || '';
-      translationVerse.textContent = verseData.translation || '';
-
-      // Clear stored data so refresh doesn't keep old verse
-      sessionStorage.removeItem('verseData');
+        // Remove temporary verse data after showing
+        sessionStorage.removeItem('verseData');
     });
 
     document.getElementById('shareMoreBtn').addEventListener('click', () => {
-      window.location.href = "/";
+        window.location.href = "/";
     });
+
+    document.getElementById('saveVerseBtn').addEventListener('click', async () => {
+        const loggedIn = sessionStorage.getItem('loggedInUser');
+
+        // Prepare verse data
+        const verseData = {
+            mood: document.getElementById('moodValue').textContent.trim(),
+            sentiment: document.getElementById('sentimentText').textContent.trim(),
+            arabicVerse: document.getElementById('arabicVerse').textContent.trim(),
+            translation: document.getElementById('translationVerse').textContent.trim(),
+            surah: document.getElementById('surahValue')?.textContent || "1",
+            ayah: document.getElementById('ayahValue')?.textContent || "1"
+        };
+
+        if (!loggedIn) {
+            // Save temporarily for after-login save
+            sessionStorage.setItem('pendingSaveVerse', JSON.stringify(verseData));
+            window.location.href = '/register.html';
+            return;
+        }
+
+        // Logged in → directly save
+        await saveVerse(verseData);
+    });
+
+async function saveVerse(verseData) {
+    try {
+        const rawUser = sessionStorage.getItem('loggedInUser');
+        let loggedInUser;
+
+        try {
+            loggedInUser = JSON.parse(rawUser);
+        } catch (e) {
+            console.warn("Invalid loggedInUser found:", rawUser);
+            sessionStorage.removeItem('loggedInUser');
+            alert("Your session expired or data was invalid. Please log in again.");
+            window.location.href = "/register.html";
+            return;
+        }
+
+        const username = loggedInUser?.username; // 👈 Add this
+        if (!username) {
+            alert("User not found. Please log in again.");
+            window.location.href = "/register.html";
+            return;
+        }
+
+        verseData.username = username; // 👈 Add username to verseData
+
+        const response = await fetch(`/api/saveVerse`, { // 👈 remove ?userId=...
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(verseData),
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(errorText || "Failed to save verse");
+        }
+
+        alert("Verse saved successfully!");
+    } catch (err) {
+        alert("Error saving verse.");
+        console.error("Verse save error:", err);
+    }
+}
+
 </script>
 </body>
 </html>
